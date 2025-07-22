@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'замени-на-свой-секретный-ключ'
 
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['vet-calendar.onrender.com']
 
 # 🔌 Установленные приложения
 INSTALLED_APPS = [
