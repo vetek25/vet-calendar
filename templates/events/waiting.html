@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Экран ожидания</title>
+  <style>
+    body {
+      background: #f0f0f0;
+      font-family: sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 6px solid #ddd;
+      border-top: 6px solid #3AB2F4;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-top: 20px;
+    }
+
+    @keyframes spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h2>Ожидание очереди...</h2>
+  <div class="spinner"></div>
+  <h3 style="margin-top: 40px;">Очередь на сегодня</h3>
+<ul>
+  {% for e in queue %}
+    <li>
+      <strong>{{ e.time|time:"H:i" }}</strong> — {{ e.title }}
+      {% if e.user.userprofile.color %}
+        <span style="display:inline-block;width:12px;height:12px;background-color:{{ e.user.userprofile.color }};border-radius:50%;margin-left:8px;"></span>
+      {% endif %}
+    </li>
+  {% empty %}
+    <li>Сегодня записей нет</li>
+  {% endfor %}
+</ul>
+
+  <p>Эта вкладка будет обновляться по мере появления новых задач</p>
+</body>
+</html>

@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: veterinary-calendar
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn calendar_project.wsgi:application
+    plan: free
+    region: frankfurt

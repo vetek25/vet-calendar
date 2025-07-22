@@ -1,0 +1,140 @@
+{% extends 'events/base.html' %}
+{% block title %}Календарь событий{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-light bg-light px-3">
+  <span class="navbar-brand mb-0 h1">Очередь -></span>
+  <a href="{% url 'wait_screen' %}" target="_blank" class="btn btn-outline-secondary">
+    Очередь на сегодня
+  </a>
+</nav>
+
+<div class="container">
+  <h2 class="mb-3">Календарь событий</h2>
+  <a href="#" class="btn btn-success mb-3" onclick="openEventModal()">➕ Добавить вручную</a>
+  <div id="calendar"></div>
+
+  <h2 class="mt-5">Список записей</h2>
+  <table class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Имя</th>
+        <th>Дата</th>
+        <th>Время</th>
+        <th>Телефон</th>
+        <th>Комментарий</th>
+        <th>Автор</th>
+        <th>Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in visible_events %}
+
+      <tr>
+        <td>{{ e.title }}</td>
+        <td>{{ e.date }}</td>
+        <td>{{ e.time }}</td>
+        <td>{{ e.phone|default:"—" }}</td>
+        <td>{{ e.comment|default:"—" }}</td>
+        <td>{{ e.user.get_full_name|default:e.user.username }}</td>
+        <td>
+          <a href="{% url 'edit_event' e.id %}" class="btn btn-sm btn-outline-primary">✏️</a>
+          <a href="{% url 'delete_event' e.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить запись?')">🗑️</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="text-center">Записей пока нет</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="{% url 'home' %}">
+      {% csrf_token %}
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="eventModalLabel">Добавить запись</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body">
+          {{ form.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Сохранить</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- FullCalendar & Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  function openEventModal() {
+    document.querySelector('input[name="date"]').value = '';
+    document.querySelector('input[name="time"]').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+    modal.show();
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const calendarEl = document.getElementById('calendar');
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'timeGridWeek',
+      locale: 'ru',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'timeGridDay,timeGridWeek,dayGridMonth'
+      },
+      slotDuration: '00:30:00',
+      displayEventTime: true,
+      selectable: true,
+      select: function (info) {
+        document.querySelector('input[name="date"]').value = info.startStr.slice(0,10);
+        document.querySelector('input[name="time"]').value = info.startStr.slice(11,16);
+        const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+        modal.show();
+      },
+      events: [
+        {% for e in events %}
+        {
+          title: '{{ e.title }} — {{ e.time|time:"H:i" }}',
+          start: '{{ e.date|date:"Y-m-d" }}T{{ e.time|time:"H:i:s" }}',
+          extendedProps: {
+            comment: '{{ e.comment|escapejs }}',
+            phone: '{{ e.phone|escapejs }}',
+            author: '{{ e.user.get_full_name|default:e.user.username|escapejs }}'
+          }
+        },
+        {% endfor %}
+      ],
+      eventDidMount: function (info) {
+        new bootstrap.Tooltip(info.el, {
+          title: `Комментарий: ${info.event.extendedProps.comment || '—'}\nТелефон: ${info.event.extendedProps.phone || '—'}`,
+          placement: 'top',
+          trigger: 'hover',
+          container: 'body'
+        });
+      }
+    });
+
+    calendar.render();
+  });
+</script>
+
+<style>
+  #calendar {
+    max-width: 100%;
+    margin: 30px auto;
+  }
+</style>
+{% endblock %}
